@@ -639,7 +639,6 @@ function endTutorial(finished) {
   jarFront.classList.remove('spot-rim');
   if (finished) saveText('mergeGameTutorialDone', '1');
   restart(); // the real game starts on an empty jar with normal characters
-  if (!playerName) askName(); // everyone takes part in the ranking: ask the name now
 }
 
 // Keep the bubble just under Mokumoku (called every frame while the tutorial is on)
@@ -903,8 +902,10 @@ const nameInput = document.getElementById('name-input');
 const nameOk = document.getElementById('name-ok');
 let nameDone = null; // what to do after the name is given
 
-function askName(then) {
+// title: what Mokumoku says at the top (the first time: "はじめましてモク！")
+function askName(then, title = 'ランキングに参加するモク！') {
   nameDone = then || null;
+  document.getElementById('name-title').textContent = title;
   nameInput.value = playerName;
   nameOk.disabled = !GameLogic.nameIsReady(nameInput.value);
   nameAskEl.hidden = false;
@@ -1636,6 +1637,9 @@ function closeSplash() {
     startGame();
     startTutorial(true);
   }
+  // Everyone takes part in the ranking: Mokumoku asks the name when the game opens
+  // (the very first time, before the tutorial goes on; older players without a name too)
+  if (!playerName) askName(null, tutorialDone() ? 'ランキングに参加するモク！' : 'はじめましてモク！');
 }
 
 splashEl.addEventListener('click', closeSplash);
