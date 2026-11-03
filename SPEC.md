@@ -22,7 +22,7 @@ A browser game where you drop items into a box. Two identical items that touch m
 | `main.js` | Everything that touches the DOM / Matter.js / audio: physics, input, drawing, UI, shape tracing |
 | `tests/*.test.js` | Node tests for `logic.js` and `config.js` |
 | `assets/candidates/` | Original candidate images (never delete) |
-| `assets/fruits/` | The 11 chosen images, `01.png` … `11.png` |
+| `assets/fruits/` | The 11 chosen images: `01.png` … `11.png` (originals) and `01.webp` … `11.webp` (what the game loads: 2.1 MB → 272 KB, same size and hitboxes, made with Chrome's WebP encoder at quality 0.86) |
 | `assets/sounds/` | `drop.wav`, `merge.wav`, `gameover.wav`, `bgm.wav` (made by `tools/make-sounds.js`) |
 | `manifest.webmanifest` | App name, icons, colors: lets phones install the game (PWA) |
 | `sw.js` | Service worker: keeps copies of the game files so it opens offline ("network first": online always gets fresh files) |
@@ -135,6 +135,12 @@ Rejected on purpose: poses with thin protrusions (sword, flag, sticks, gun, box 
 - **Install as an app (PWA)**: manifest (かじーゲーム, standalone, portrait, icons), iPhone meta tags and touch icon, theme color, OGP title/description. `sw.js` caches the app files; checked: after one visit the game opens and plays with the network off. Service workers only run on https (GitHub Pages) or localhost.
 - **Phones**: `viewport-fit=cover` + safe-area padding (notch, home bar), and `resize()` subtracts that padding. Merge vibration (Android only; on/off in 設定, default on). Long-press menus are blocked except in text inputs.
 - **Feel**: every button shrinks slightly when pressed and plays a soft tap sound (`tap.wav`); the home and game screens fade in; settings show "ver 1.0".
+
+## Publishing (GitHub Pages)
+- Live: **https://akionlywork-dot.github.io/kajii-game/** — repository `akionlywork-dot/kajii-game` (public), Pages from `main` / root.
+- Not uploaded (`.gitignore`): `assets/candidates/` (kept on the computer only) and `.claude/` (local settings with this computer's paths).
+- To update the site: run `node --test`, then `git add -A`, `git commit -m "..."`, `git push`. Pages rebuilds in about a minute. The service worker is network-first, so players get the new files when online; bump `VERSION` in `sw.js` to drop old offline copies.
+- Checked on the live site: loads with no console errors and no failed requests, installable as an app (no installability errors), opens and plays offline after one visit.
 
 ## 7. Build order
 
