@@ -1547,7 +1547,7 @@ function drawMascot(now, dtMs) {
   let face = GameLogic.mascotFace(now, mascotSurprisedUntil);
   if (tutorialActive && face !== 'surprised') face = Math.floor(now / 160) % 2 ? 'talk' : 'talkClosed'; // explaining
   drawMokumoku(fxCtx, mascotX, y, MASCOT_R, face);
-  if (tutorialActive && !paused) placeTutor();
+  if (tutorialActive) placeTutor(); // also while paused (e.g. the name card is open)
 }
 
 // ----- Main loop -----
