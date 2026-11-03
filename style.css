@@ -148,18 +148,6 @@ body {
   opacity: 0.75;
 }
 
-/* "© 2026 がんばりピース" at the bottom of the home screen */
-.copyright {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(env(safe-area-inset-bottom) + 0.6em);
-  text-align: center;
-  font-size: 0.6em;
-  font-weight: 800;
-  color: var(--lavender-dark);
-  opacity: 0.7;
-}
 
 /* ----- Home screen: its own screen, shown first ----- */
 #home {
