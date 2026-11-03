@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <!-- user-scalable=no stops pinch-zoom while playing on phones -->
+  <!-- viewport-fit=cover: use the whole screen on phones with a notch (style.css keeps clear of it) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>かじーゲーム</title>
+  <meta name="description" content="同じ人どうしをくっつけて進化させる、ほのぼの落ちものパズル">
+  <!-- for links shared on LINE / X -->
+  <meta property="og:title" content="かじーゲーム">
+  <meta property="og:description" content="同じ人どうしをくっつけて進化させる、ほのぼの落ちものパズル">
+  <meta property="og:type" content="website">
+  <!-- install as an app (PWA): name, icons, colors -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#bfd8f2">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="かじーゲーム">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="icon" href="assets/icons/icon-192.png">
+  <!-- Rounded, cute font (also has Japanese). Only 2 weights to keep it light. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="at-home">
+  <!-- Background: slow clouds and twinkling stars, drawn by main.js -->
+  <canvas id="sky"></canvas>
+
+  <!-- Loading screen: shown until the pictures and the font have arrived -->
+  <div id="loading">
+    <canvas id="loading-mascot"></canvas>
+    <div class="loading-text">よみこみ中…</div>
+    <div class="loading-bar"><div id="loading-fill"></div></div>
+  </div>
+
+  <!-- Title call: the company name, shown once after loading (tap to go on sooner) -->
+  <div id="splash" hidden>
+    <div class="studio">がんばりピース</div>
+    <div class="presents">presents</div>
+  </div>
+
+  <!-- Home screen: its own screen, shown first. The Start button starts the game. -->
+  <div id="home">
+    <!-- sound on/off in the top-right corner -->
+    <button id="home-mute" class="corner-btn" type="button" aria-label="mute">🔊</button>
+    <div class="logo">かじーゲーム</div>
+    <!-- showcase: sleeping Mokumoku with all 11 characters slowly circling (drawn by main.js).
+         Tap it and Mokumoku wakes up and says something in a speech bubble. -->
+    <div class="showcase">
+      <canvas id="home-mascot"></canvas>
+      <div id="home-bubble" class="bubble" hidden></div>
+    </div>
+    <div class="home-best">
+      <div class="label">BEST</div>
+      <div id="home-best" class="value">0</div>
+    </div>
+    <button id="start" type="button">Tap to Start</button>
+    <div class="home-menu">
+      <button id="btn-howto" class="menu-btn" type="button">遊び方</button>
+      <button id="btn-ranking" class="menu-btn" type="button">ランキング</button>
+      <button id="btn-book" class="menu-btn" type="button">図鑑</button>
+      <button id="btn-settings" class="menu-btn" type="button">設定</button>
+    </div>
+    <div class="copyright">© 2026 がんばりピース</div>
+  </div>
+
+  <!-- One pop-up panel for the home menu. main.js shows one section at a time. -->
+  <div id="panel" hidden>
+    <div class="panel-card">
+      <div id="panel-title" class="panel-title"></div>
+
+      <div id="panel-howto" class="panel-body" hidden>
+        <p>タップ（クリック）した場所に、もくもくがキャラを落とします。</p>
+        <p>同じキャラどうしがくっつくと、ひとつ大きいキャラに進化します。</p>
+        <p>いちばん大きいキャラどうしがくっつくと、2人とも消えてボーナス！</p>
+        <p>キャラがびんの口からあふれて 2 秒たつと、ゲームオーバー。</p>
+        <button id="howto-tutorial" class="big-btn" type="button">もくもくに教えてもらう</button>
+      </div>
+
+      <div id="panel-ranking" class="panel-body" hidden>
+        <ol id="ranking-list"></ol>
+        <p id="ranking-message"></p>
+      </div>
+
+      <div id="panel-book" class="panel-body" hidden>
+        <div id="book-count" class="book-count"></div>
+        <div id="book-grid" class="book-grid"></div>
+      </div>
+
+      <div id="panel-settings" class="panel-body" hidden>
+        <label class="setting">BGM の音量
+          <input id="vol-bgm" type="range" min="0" max="100" step="5">
+        </label>
+        <label class="setting">効果音の音量
+          <input id="vol-se" type="range" min="0" max="100" step="5">
+        </label>
+        <label class="setting setting-row">背景の雲と星を動かす
+          <input id="sky-motion" type="checkbox">
+        </label>
+        <label class="setting setting-row">合体のときに振動（Android）
+          <input id="vibrate" type="checkbox">
+        </label>
+        <div class="version">かじーゲーム ver 1.0</div>
+      </div>
+
+      <button id="panel-close" type="button">とじる</button>
+    </div>
+  </div>
+
+  <!-- Game screen (hidden while the home screen is shown) -->
+  <div id="game-wrap">
+    <!-- Top bar: score, high score, pause and mute buttons -->
+    <div id="ui">
+      <div class="box">
+        <div class="label">SCORE</div>
+        <div id="score" class="value">0</div>
+      </div>
+      <div class="box">
+        <div class="label">BEST</div>
+        <div id="best" class="value">0</div>
+      </div>
+      <button id="pause-btn" class="hud-btn" type="button" aria-label="pause">⏸</button>
+      <button id="mute" class="hud-btn" type="button" aria-label="mute">🔊</button>
+    </div>
+
+    <!-- Left: the jar. Right: NEXT box and the evolution circle. -->
+    <div id="row">
+      <!-- The play area (#board). The glass jar starts at the danger line, so the
+           space above the jar's mouth is open sky and a full jar overflows. -->
+      <div id="stage">
+       <div id="board">
+        <div id="jar-back"></div>  <!-- glass body, behind the characters -->
+        <canvas id="game"></canvas>
+        <!-- Tutorial: Mokumoku explains in a speech bubble (main.js keeps it under Mokumoku) -->
+        <div id="tutor" class="tutor" hidden>
+          <div id="tutor-text"></div>
+          <div id="tutor-next" class="tutor-next">タップでつぎへ ▶</div>
+        </div>
+        <button id="tutor-skip" class="tutor-skip" type="button" hidden>スキップ</button>
+        <div id="jar-front"></div> <!-- rim, glass edge and shine, in front (never takes taps) -->
+        <!-- Game over: see-through background + a rounded card -->
+        <!-- Pause: continue, start again, or go home (the last two ask first) -->
+        <div id="pause" class="overlay" hidden>
+          <div class="card">
+            <div class="title">ひとやすみ</div>
+            <div id="pause-menu" class="card-buttons">
+              <button id="resume" class="big-btn" type="button">つづける</button>
+              <button id="pause-retry" class="sub-btn" type="button">やりなおす</button>
+              <button id="pause-home" class="sub-btn" type="button">ホームへ</button>
+            </div>
+            <div id="pause-confirm" class="card-buttons" hidden>
+              <p id="confirm-text" class="confirm-text"></p>
+              <button id="confirm-yes" class="big-btn" type="button">はい</button>
+              <button id="confirm-no" class="sub-btn" type="button">いいえ</button>
+            </div>
+          </div>
+        </div>
+        <div id="gameover" class="overlay" hidden>
+          <div class="card">
+            <div class="title">GAME OVER</div>
+            <canvas id="over-mascot" class="mascot"></canvas>
+            <div class="label">SCORE</div>
+            <div id="over-score" class="final-score">0</div>
+            <div id="over-best" class="new-best" hidden>NEW BEST!</div>
+            <div id="over-high" class="high-score">BEST 0</div>
+            <!-- Online ranking: shown only when config.js has a rankingUrl -->
+            <div id="rank-form" class="rank-form" hidden>
+              <input id="rank-name" type="text" maxlength="10" placeholder="なまえ" autocomplete="nickname">
+              <button id="rank-send" class="sub-btn" type="button">ランキングに送る</button>
+              <div class="rank-note">名前はランキングで公開されます</div>
+              <div id="rank-result" class="rank-result"></div>
+            </div>
+            <button id="retry" class="big-btn" type="button">Retry</button>
+            <button id="share" class="sub-btn" type="button">シェア</button>
+            <button id="over-home" class="sub-btn" type="button">ホームへ</button>
+          </div>
+        </div>
+       </div>
+      </div>
+
+      <div id="side">
+        <div id="next-box">
+          <div class="label">NEXT</div>
+          <canvas id="next"></canvas>
+        </div>
+        <!-- Evolution circle: all 11 characters in order, drawn by main.js -->
+        <canvas id="ring"></canvas>
+      </div>
+    </div>
+
+    <!-- Mokumoku floats here, over the jar. It never takes taps. -->
+    <canvas id="fx"></canvas>
+  </div>
+
+  <!-- Physics library from CDN (pinned version) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+
+  <!-- Our files: settings, pure logic, then the game -->
+  <script src="config.js"></script>
+  <script src="logic.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

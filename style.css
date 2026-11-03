@@ -1,0 +1,1005 @@
+/* ===== Theme: "a glass jar floating in a soft evening sky" =====
+   Change the colors here; everything below uses them. */
+:root {
+  --sky-top: #bfd8f2;      /* pale blue */
+  --sky-mid: #e4dcf2;      /* in between: a hint of lavender */
+  --sky-bottom: #fbd9c4;   /* soft peach */
+  --cream: #fff8ec;        /* cards, jar rim */
+  --cream-edge: #f3e3cc;   /* card borders */
+  --lavender: #b9a8e8;     /* buttons, highlights */
+  --lavender-dark: #8e7cc9;/* button edges, labels */
+  --lavender-soft: #ece6fb;/* soft highlight */
+  --text: #5a5378;         /* main text: soft indigo */
+  --shadow: 0 0.25em 0.7em rgba(90, 80, 140, 0.18); /* soft lavender shadow */
+  --font: 'M PLUS Rounded 1c', 'Hiragino Maru Gothic ProN', system-ui, sans-serif;
+}
+
+/* Fill the whole screen and never scroll */
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  /* the evening sky: pale blue at the top, soft peach at the bottom */
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-bottom) 100%);
+  color: var(--text);
+  font-family: var(--font);
+  /* touches never scroll or zoom the page */
+  touch-action: none;
+  /* stop long-press menus / text selection on phones */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Center the game area */
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* keep clear of the notch and the home bar on phones (0 on other screens) */
+  box-sizing: border-box;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* Background canvas: fills the screen, behind the game, never takes taps */
+#sky {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ----- Loading screen: covers everything until the pictures arrive ----- */
+#loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8em;
+  font-size: clamp(14px, 4vmin, 24px);
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-bottom) 100%);
+  z-index: 30;
+  transition: opacity 0.4s;
+}
+
+/* fades out, then main.js hides it */
+#loading.done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#loading-mascot {
+  width: 8em;
+  height: 5.3em;
+  animation: float 2.4s ease-in-out infinite;
+}
+
+.loading-text {
+  font-weight: 800;
+  color: var(--lavender-dark);
+}
+
+.loading-bar {
+  width: 10em;
+  height: 0.6em;
+  border-radius: 1em;
+  background: var(--cream);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+#loading-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: 1em;
+  background: var(--lavender);
+  transition: width 0.2s;
+}
+
+/* ----- Title call: the company name after loading ----- */
+#splash {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-bottom) 100%);
+  cursor: pointer;
+  z-index: 25; /* under the loading screen, over everything else */
+  animation: splash-in 0.6s ease-out;
+  transition: opacity 0.45s;
+}
+
+#splash[hidden] {
+  display: none;
+}
+
+/* fades out, then main.js hides it */
+#splash.done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes splash-in {
+  from { opacity: 0; transform: scale(0.96); }
+}
+
+.studio {
+  font-size: min(12vw, 8vh);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--lavender-dark);
+  text-shadow:
+    0.05em 0 #fff, -0.05em 0 #fff, 0 0.05em #fff, 0 -0.05em #fff,
+    0 0.12em 0.3em rgba(90, 80, 140, 0.3);
+}
+
+.presents {
+  font-size: min(4.5vw, 3vh);
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--lavender-dark);
+  opacity: 0.75;
+}
+
+/* "© 2026 がんばりピース" at the bottom of the home screen */
+.copyright {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(env(safe-area-inset-bottom) + 0.6em);
+  text-align: center;
+  font-size: 0.6em;
+  font-weight: 800;
+  color: var(--lavender-dark);
+  opacity: 0.7;
+}
+
+/* ----- Home screen: its own screen, shown first ----- */
+#home {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  /* the top keeps room for the sound button in the corner */
+  padding: calc(env(safe-area-inset-top) + 3.6em) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9em;
+  /* everything on the home screen follows this size: it grows with the screen
+     width AND height, so tall phones are filled instead of left empty */
+  font-size: clamp(10px, min(5.2vw, 2.4vh), 30px);
+  z-index: 10;
+}
+
+/* Wide screens (PC, phone turned sideways): two columns, so the sides are not empty.
+   Left: a big showcase. Right: logo, best score, Start, menu. */
+@media (min-aspect-ratio: 5/4) {
+  #home {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-areas:
+      'show  logo'
+      'show  best'
+      'show  start'
+      'show  menu';
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+    justify-items: center;
+    column-gap: 3em;
+    row-gap: 0.9em;
+    padding-top: env(safe-area-inset-top); /* the corner button no longer needs room above */
+    font-size: clamp(10px, min(2.2vw, 4.2vh), 30px);
+  }
+  #home-mascot {
+    width: 22em;
+    height: 16em;
+  }
+  #home .logo { grid-area: logo; }
+  #home .showcase { grid-area: show; }
+  #home .home-best { grid-area: best; }
+  #home #start { grid-area: start; }
+  #home .home-menu { grid-area: menu; }
+}
+
+/* the showcase can be tapped (Mokumoku talks) */
+.showcase {
+  position: relative;
+  cursor: pointer;
+}
+
+/* Mokumoku's speech bubble, above its head */
+.bubble {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 70%;
+  margin: 0 auto;
+  width: fit-content;
+  max-width: 13em;
+  padding: 0.5em 0.9em;
+  font-size: 0.95em;
+  font-weight: 800;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--text);
+  background: #fff;
+  border: 0.12em solid var(--lavender);
+  border-radius: 1.2em;
+  box-shadow: var(--shadow);
+  pointer-events: none; /* taps go to Mokumoku */
+  z-index: 1;
+}
+
+/* the little tail pointing down at Mokumoku */
+.bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -0.55em;
+  width: 0.8em;
+  height: 0.8em;
+  margin-left: -0.4em;
+  background: #fff;
+  border-right: 0.12em solid var(--lavender);
+  border-bottom: 0.12em solid var(--lavender);
+  transform: rotate(45deg);
+}
+
+.bubble[hidden] {
+  display: none;
+}
+
+/* pops in each time Mokumoku says something new */
+.bubble.pop {
+  animation: bubble-pop 0.25s ease-out;
+}
+
+@keyframes bubble-pop {
+  from { transform: scale(0.6); opacity: 0; }
+}
+
+/* small round button in the top-right corner (sound on/off) */
+.corner-btn {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 0.8em);
+  right: calc(env(safe-area-inset-right) + 0.8em);
+  width: 2.6em;
+  height: 2.6em;
+  font-size: 1em;
+  padding: 0;
+  border: 0.12em solid var(--lavender-dark);
+  border-radius: 50%;
+  background: var(--lavender-soft);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.corner-btn:active {
+  transform: scale(0.94);
+}
+
+#home[hidden] {
+  display: none;
+}
+
+.logo {
+  font-size: min(3.2em, 13.5vw); /* never wider than the screen (6 letters) */
+  font-weight: 800;
+  color: var(--lavender-dark);
+  /* white outline + soft shadow, like a sticker */
+  text-shadow:
+    0.06em 0 #fff, -0.06em 0 #fff, 0 0.06em #fff, 0 -0.06em #fff,
+    0 0.12em 0.25em rgba(90, 80, 140, 0.35);
+  animation: float 2.4s ease-in-out infinite;
+}
+
+/* bobs up and down gently (CSS only, cheap on phones) */
+@keyframes float {
+  50% { transform: translateY(-0.25em); }
+}
+
+/* sleeping Mokumoku on the home screen (drawn by main.js) */
+#home-mascot {
+  width: 16em;
+  height: 11em;
+}
+
+/* best score on the home screen: a small cream card */
+.home-best {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.3em 1.6em 0.4em;
+  background: var(--cream);
+  border: 0.12em solid var(--cream-edge);
+  border-radius: 1em;
+  box-shadow: var(--shadow);
+}
+
+/* the row of small buttons under Start */
+/* 2 x 2 grid of big buttons */
+.home-menu {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6em;
+  width: 15em;
+}
+
+/* the Start button is as wide as the menu */
+#home #start {
+  width: 10em; /* its font is 1.5x bigger, so this equals the menu's 15em */
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.menu-btn {
+  font-family: var(--font);
+  font-size: 1em;
+  font-weight: 800;
+  padding: 0.65em 0.9em;
+  min-width: 3em;
+  color: var(--lavender-dark);
+  background: var(--cream);
+  border: 0.12em solid var(--cream-edge);
+  border-radius: 1em;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+/* ----- Pop-up panel (how to play, ranking, settings) ----- */
+#panel {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(90, 83, 120, 0.4); /* soft indigo, see-through */
+  font-size: clamp(14px, 4vmin, 22px);
+  z-index: 20;
+}
+
+#panel[hidden],
+#panel [hidden] {
+  display: none;
+}
+
+.panel-card {
+  width: min(86vw, 22em);
+  max-height: 86vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 1.2em 1.4em 1.4em;
+  background: var(--cream);
+  border: 0.15em solid var(--cream-edge);
+  border-radius: 1.4em;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8em;
+  animation: pop-in 0.25s ease-out;
+}
+
+.panel-title {
+  font-size: 1.4em;
+  font-weight: 800;
+  color: var(--lavender-dark);
+}
+
+.panel-body {
+  width: 100%;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.panel-body p {
+  margin: 0 0 0.6em;
+}
+
+#ranking-list {
+  margin: 0;
+  padding-left: 1.6em;
+  font-weight: 800;
+}
+
+#ranking-message {
+  text-align: center;
+  color: var(--lavender-dark);
+}
+
+/* character book: 11 boxes; unseen characters are shown as a pale shadow */
+.book-count {
+  text-align: center;
+  font-weight: 800;
+  color: var(--lavender-dark);
+  margin-bottom: 0.5em;
+}
+
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4em;
+}
+
+.book-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.3em 0.2em;
+  border-radius: 0.8em;
+  background: var(--lavender-soft);
+  font-size: 0.75em;
+  font-weight: 800;
+  color: var(--lavender-dark);
+}
+
+.book-cell img {
+  width: 3.6em;
+  height: 3.6em;
+  object-fit: contain;
+}
+
+/* not seen yet: a pale shadow of the picture */
+.book-cell.unseen img {
+  filter: brightness(0);
+  opacity: 0.18;
+}
+
+/* ranking form on the game-over card */
+.rank-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4em;
+  margin-bottom: 0.6em;
+}
+
+.rank-form input {
+  font-family: var(--font);
+  font-size: 1em;
+  font-weight: 800;
+  width: 9em;
+  padding: 0.35em 0.7em;
+  text-align: center;
+  color: var(--text);
+  border: 0.12em solid var(--lavender);
+  border-radius: 1em;
+  background: #fff;
+  /* typing must work even though the page blocks text selection */
+  user-select: text;
+  -webkit-user-select: text;
+  touch-action: auto;
+}
+
+.rank-result {
+  min-height: 1.2em;
+  font-weight: 800;
+  color: var(--lavender-dark);
+  text-align: center;
+}
+
+/* one setting per line: name, then the slider */
+.setting {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  margin-bottom: 0.9em;
+  font-weight: 800;
+}
+
+/* name and switch on the same line */
+.setting-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.setting input[type="range"] {
+  width: 100%;
+  accent-color: var(--lavender-dark);
+  touch-action: auto; /* lets the finger drag the slider */
+}
+
+.setting input[type="checkbox"] {
+  width: 1.4em;
+  height: 1.4em;
+  accent-color: var(--lavender-dark);
+}
+
+#panel-close {
+  font-family: var(--font);
+  font-size: 1.1em;
+  font-weight: 800;
+  padding: 0.4em 1.6em;
+  color: #fff;
+  background: var(--lavender);
+  border: 0.12em solid var(--lavender-dark);
+  border-radius: 2em;
+  box-shadow: 0 0.15em 0 var(--lavender-dark);
+  cursor: pointer;
+}
+
+/* every button shrinks a little while pressed, so a tap feels like a tap */
+.menu-btn:active,
+.sub-btn:active,
+#mute:active,
+#pause-btn:active {
+  transform: scale(0.94);
+}
+
+/* screens fade in when they appear */
+#home:not([hidden]),
+body:not(.at-home) #game-wrap {
+  animation: fade-in 0.35s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+.rank-note {
+  font-size: 0.75em;
+  color: var(--lavender-dark);
+}
+
+.version {
+  text-align: center;
+  font-size: 0.75em;
+  color: var(--lavender-dark);
+  opacity: 0.7;
+}
+
+/* ----- Game screen ----- */
+/* main.js sets the width and font-size of this box when the window resizes.
+   Everything inside uses "em", so it all scales together. */
+#game-wrap {
+  position: relative;
+}
+
+/* hidden (but still laid out) while the home screen is shown */
+body.at-home #game-wrap {
+  visibility: hidden;
+}
+
+/* ----- Top bar (HUD): rounded cards ----- */
+/* main.js sets its height, so it never covers the play area */
+#ui {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5em;
+  padding: 0.3em 0.1em;
+  box-sizing: border-box;
+}
+
+.box {
+  flex: 1;
+  min-width: 0; /* lets cards shrink on narrow phones instead of overflowing */
+  background: var(--cream);
+  border: 0.12em solid var(--cream-edge);
+  border-radius: 1em;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.label {
+  font-size: 0.7em;
+  font-weight: 800;
+  color: var(--lavender-dark);
+  letter-spacing: 0.12em;
+}
+
+.value {
+  font-size: 1.5em;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+#mute, #pause-btn {
+  flex: 0 0 2.9em;
+  font-size: 1.1em;
+  border: 0.12em solid var(--lavender-dark);
+  border-radius: 1em;
+  background: var(--lavender-soft);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  padding: 0;
+}
+
+/* jar on the left, NEXT + evolution circle on the right */
+#row {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* ----- The jar ----- */
+/* main.js sets the space above it (open sky) and its padding */
+#stage {
+  position: relative;
+}
+
+#board {
+  position: relative;
+}
+
+/* main.js sets "top" so the jar's mouth sits exactly on the danger line.
+   Above it is open sky: when the jar is full, characters overflow its mouth. */
+#jar-back,
+#jar-front {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 0.3em 0.3em 0.7em 0.7em; /* small corners: the walls (hitbox) are straight */
+  pointer-events: none; /* never blocks a tap */
+}
+
+/* glass body behind the characters: the sky shows through */
+#jar-back {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.22) 100%);
+  box-shadow: 0 0.7em 1.6em rgba(90, 80, 140, 0.2); /* soft shadow under the jar */
+  z-index: 0;
+}
+
+#game {
+  position: relative;
+  z-index: 1;
+  display: block;
+  /* touch-action: none = touches go to the game, not to scrolling */
+  touch-action: none;
+}
+
+/* glass edges in front of the characters (sides and bottom; the top is open) */
+#jar-front {
+  box-shadow:
+    inset 0.14em 0 0 rgba(255, 255, 255, 0.85),
+    inset -0.14em 0 0 rgba(255, 255, 255, 0.85),
+    inset 0 -0.14em 0 rgba(255, 255, 255, 0.85),
+    inset 0 0 1em rgba(255, 255, 255, 0.35);
+  z-index: 2;
+}
+
+/* ----- Tutorial: Mokumoku's speech bubble inside the jar ----- */
+/* main.js sets "left" and "top" every frame so it stays under Mokumoku */
+.tutor {
+  position: absolute;
+  width: max-content;
+  max-width: 78%;
+  padding: 0.6em 1em 0.5em;
+  font-size: 1.05em;
+  font-weight: 800;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--text);
+  background: #fff;
+  border: 0.12em solid var(--lavender);
+  border-radius: 1.2em;
+  box-shadow: var(--shadow);
+  cursor: pointer; /* tapping the bubble also goes on */
+  z-index: 6;
+}
+
+/* while the player should drop or merge, the bubble lets taps through */
+.tutor.passive {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* the tail points up at Mokumoku; --tail is set by main.js */
+.tutor::before {
+  content: '';
+  position: absolute;
+  top: -0.55em;
+  left: var(--tail, 50%);
+  width: 0.8em;
+  height: 0.8em;
+  margin-left: -0.4em;
+  background: #fff;
+  border-left: 0.12em solid var(--lavender);
+  border-top: 0.12em solid var(--lavender);
+  transform: rotate(45deg);
+}
+
+.tutor[hidden],
+.tutor [hidden],
+.tutor-skip[hidden] {
+  display: none;
+}
+
+.tutor-next {
+  margin-top: 0.3em;
+  font-size: 0.75em;
+  color: var(--lavender-dark);
+  animation: blink 1.2s ease-in-out infinite;
+}
+
+/* a new line pops in */
+.tutor.pop {
+  animation: bubble-pop 0.25s ease-out;
+}
+
+.tutor-skip {
+  position: absolute;
+  right: 0.5em;
+  top: 0.5em;
+  font-family: var(--font);
+  font-size: 0.85em;
+  font-weight: 800;
+  padding: 0.3em 0.9em;
+  color: var(--lavender-dark);
+  background: var(--cream);
+  border: 0.12em solid var(--lavender);
+  border-radius: 1em;
+  cursor: pointer;
+  z-index: 7;
+}
+
+/* what the tutorial is talking about glows softly */
+.spotlight {
+  animation: spotlight 1s ease-in-out infinite;
+}
+
+@keyframes spotlight {
+  50% { box-shadow: 0 0 0 0.3em rgba(185, 168, 232, 0.95), 0 0 1.2em rgba(185, 168, 232, 0.9); }
+}
+
+/* the jar's mouth glows (the rim is drawn by #jar-front::before) */
+#jar-front.spot-rim::before {
+  animation: spotlight 1s ease-in-out infinite;
+}
+
+
+/* thin cream rim at the mouth of the jar */
+#jar-front::before {
+  content: '';
+  position: absolute;
+  left: -0.35em;
+  right: -0.35em;
+  top: -0.35em;
+  height: 0.7em;
+  border-radius: 0.5em;
+  background: linear-gradient(180deg, #fffdf7 0%, var(--cream-edge) 100%);
+  box-shadow: 0 0.12em 0.3em rgba(90, 80, 140, 0.25);
+}
+
+/* the rim glows pink while the jar is overflowing (danger) */
+#jar-front.danger::before {
+  background: linear-gradient(180deg, #ffe3ec 0%, #f59ab8 100%);
+  box-shadow: 0 0 0.8em rgba(240, 110, 150, 0.8);
+  animation: blink 0.8s ease-in-out infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.55; }
+}
+
+/* a light reflection line on the left side of the glass */
+#jar-front::after {
+  content: '';
+  position: absolute;
+  top: 6%;
+  bottom: 14%;
+  left: 4.5%;
+  width: 0.5em;
+  border-radius: 1em;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.1) 100%);
+}
+
+/* "top" layout (tall screens): the NEXT box and the circle sit side by side
+   in a row above the jar, so the jar can use the full width */
+.layout-top #row {
+  flex-direction: column;
+}
+
+.layout-top #side {
+  order: -1; /* before the jar */
+  flex-direction: row;
+  justify-content: center;
+  gap: 1.5em;
+}
+
+.layout-top #next-box {
+  box-sizing: border-box;
+  justify-content: center;
+}
+
+/* "side" layout (wide screens): the score cards sit at the top of the right
+   column in three lines: SCORE, BEST, then the pause and sound buttons */
+.layout-side #ui {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6em;
+  width: 100%;
+  padding: 0;
+}
+
+.layout-side #ui .box {
+  grid-column: 1 / 3; /* SCORE and BEST each take a whole line */
+}
+
+.layout-side #ui .box {
+  padding: 0.4em 0;
+}
+
+.layout-side #mute,
+.layout-side #pause-btn {
+  height: 2.6em;
+  width: 100%;
+}
+
+/* ----- Right column: NEXT box and evolution circle ----- */
+#side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8em;
+}
+
+#next-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2em;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5em 0.4em 0.6em;
+  background: var(--cream);
+  border: 0.12em solid var(--cream-edge);
+  border-radius: 1.2em;
+  box-shadow: var(--shadow);
+}
+
+#next {
+  width: 4.6em;
+  height: 4.6em;
+}
+
+/* the evolution circle: a round cream card, icons drawn by main.js */
+#ring {
+  display: block;
+  background: var(--cream);
+  border-radius: 50%;
+  box-shadow: var(--shadow);
+}
+
+/* Mokumoku's layer: covers the whole game box, drawn by main.js, never takes taps */
+#fx {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Mokumoku on the game-over card (drawn by main.js) */
+.mascot {
+  width: 7em;
+  height: 4.6em;
+}
+
+/* round lavender buttons (Start, Retry, and the main choice on a card) */
+#start, .big-btn {
+  font-family: var(--font);
+  font-size: 1.5em;
+  font-weight: 800;
+  padding: 0.45em 1.6em;
+  border: 0.12em solid var(--lavender-dark);
+  border-radius: 2em;
+  background: var(--lavender);
+  color: #fff;
+  text-shadow: 0 0.06em 0 var(--lavender-dark);
+  box-shadow: 0 0.2em 0 var(--lavender-dark), var(--shadow);
+  cursor: pointer;
+}
+
+#start:active, .big-btn:active {
+  transform: translateY(0.15em);
+  box-shadow: 0 0.05em 0 var(--lavender-dark);
+}
+
+/* smaller cream buttons for the other choices on a card */
+.sub-btn {
+  font-family: var(--font);
+  font-size: 1.1em;
+  font-weight: 800;
+  padding: 0.35em 1.4em;
+  color: var(--lavender-dark);
+  background: var(--cream);
+  border: 0.12em solid var(--lavender);
+  border-radius: 2em;
+  cursor: pointer;
+}
+
+/* buttons on a card, one under the other */
+.card-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.confirm-text {
+  white-space: pre-line; /* a line break in the text starts a new line */
+  margin: 0 0 0.4em;
+  text-align: center;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+/* ----- Pause and game over: see-through background + a rounded card ----- */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(90, 83, 120, 0.4); /* soft indigo, see-through */
+  z-index: 5;
+}
+
+/* the "hidden" attribute must win over display: flex above */
+.overlay[hidden],
+.overlay [hidden] {
+  display: none;
+}
+
+.overlay .card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3em;
+  padding: 1.4em 2.2em 1.6em;
+  background: var(--cream);
+  border: 0.15em solid var(--cream-edge);
+  border-radius: 1.6em;
+  box-shadow: var(--shadow);
+  animation: pop-in 0.3s ease-out;
+}
+
+/* the card pops in softly */
+@keyframes pop-in {
+  from { transform: scale(0.85); opacity: 0; }
+}
+
+.overlay .title {
+  font-size: 2.1em;
+  font-weight: 800;
+  color: var(--lavender-dark);
+  margin-bottom: 0.3em;
+}
+
+#gameover .final-score {
+  font-size: 2.6em;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text);
+}
+
+#gameover .new-best {
+  font-size: 1.1em;
+  font-weight: 800;
+  color: #fff;
+  background: var(--lavender);
+  padding: 0.1em 0.8em;
+  border-radius: 1em;
+}
+
+#gameover .high-score {
+  font-size: 1.1em;
+  font-weight: 800;
+  color: var(--lavender-dark);
+  margin-bottom: 0.8em;
+}

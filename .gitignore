@@ -1,0 +1,9 @@
+# Original candidate photos: kept on this computer only (the game uses assets/fruits/)
+assets/candidates/
+
+# Claude Code's local settings (contain this computer's folder paths)
+.claude/
+
+# OS / editor leftovers
+Thumbs.db
+.DS_Store
