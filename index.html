@@ -5,10 +5,10 @@
   <!-- user-scalable=no stops pinch-zoom while playing on phones -->
   <!-- viewport-fit=cover: use the whole screen on phones with a notch (style.css keeps clear of it) -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>かじーゲーム</title>
+  <title>かじーの合体大合戦</title>
   <meta name="description" content="同じ人どうしをくっつけて進化させる、ほのぼの落ちものパズル">
   <!-- for links shared on LINE / X -->
-  <meta property="og:title" content="かじーゲーム">
+  <meta property="og:title" content="かじーの合体大合戦">
   <meta property="og:description" content="同じ人どうしをくっつけて進化させる、ほのぼの落ちものパズル">
   <meta property="og:type" content="website">
   <!-- install as an app (PWA): name, icons, colors -->
@@ -16,7 +16,7 @@
   <meta name="theme-color" content="#bfd8f2">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="かじーゲーム">
+  <meta name="apple-mobile-web-app-title" content="かじーの合体大合戦">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
   <link rel="icon" href="assets/icons/icon-192.png">
   <!-- Rounded, cute font (also has Japanese). Only 2 weights to keep it light. -->
@@ -46,7 +46,7 @@
   <div id="home">
     <!-- sound on/off in the top-right corner -->
     <button id="home-mute" class="corner-btn" type="button" aria-label="mute">🔊</button>
-    <div class="logo">かじーゲーム</div>
+    <div class="logo"><span class="logo-small">かじーの</span><span class="logo-big">合体大合戦</span></div>
     <!-- showcase: sleeping Mokumoku with all 11 characters slowly circling (drawn by main.js).
          Tap it and Mokumoku wakes up and says something in a speech bubble. -->
     <div class="showcase">
@@ -67,6 +67,18 @@
     <div class="copyright">© 2026 がんばりピース</div>
   </div>
 
+  <!-- Asked once: the name for the ranking (everyone takes part). It cannot be skipped. -->
+  <div id="name-ask" hidden>
+    <div class="panel-card">
+      <canvas id="name-mascot" class="mascot"></canvas>
+      <div class="panel-title">ランキングに参加するモク！</div>
+      <p class="name-help">ランキングにのせる名前を教えてモク（10文字まで）</p>
+      <input id="name-input" class="name-input" type="text" maxlength="10" placeholder="なまえ" autocomplete="nickname">
+      <p class="rank-note">名前とスコアは、ランキングで公開されます</p>
+      <button id="name-ok" class="big-btn" type="button" disabled>決定</button>
+    </div>
+  </div>
+
   <!-- One pop-up panel for the home menu. main.js shows one section at a time. -->
   <div id="panel" hidden>
     <div class="panel-card">
@@ -81,6 +93,7 @@
       </div>
 
       <div id="panel-ranking" class="panel-body" hidden>
+        <p id="ranking-me" class="ranking-me"></p>
         <ol id="ranking-list"></ol>
         <p id="ranking-message"></p>
       </div>
@@ -91,6 +104,9 @@
       </div>
 
       <div id="panel-settings" class="panel-body" hidden>
+        <label class="setting">ランキングの名前
+          <input id="name-setting" class="name-input" type="text" maxlength="10" autocomplete="nickname">
+        </label>
         <label class="setting">BGM の音量
           <input id="vol-bgm" type="range" min="0" max="100" step="5">
         </label>
@@ -103,7 +119,7 @@
         <label class="setting setting-row">合体のときに振動（Android）
           <input id="vibrate" type="checkbox">
         </label>
-        <div class="version">かじーゲーム ver 1.0</div>
+        <div class="version">かじーの合体大合戦 ver 1.0</div>
       </div>
 
       <button id="panel-close" type="button">とじる</button>
@@ -166,13 +182,8 @@
             <div id="over-score" class="final-score">0</div>
             <div id="over-best" class="new-best" hidden>NEW BEST!</div>
             <div id="over-high" class="high-score">BEST 0</div>
-            <!-- Online ranking: shown only when config.js has a rankingUrl -->
-            <div id="rank-form" class="rank-form" hidden>
-              <input id="rank-name" type="text" maxlength="10" placeholder="なまえ" autocomplete="nickname">
-              <button id="rank-send" class="sub-btn" type="button">ランキングに送る</button>
-              <div class="rank-note">名前はランキングで公開されます</div>
-              <div id="rank-result" class="rank-result"></div>
-            </div>
+            <!-- Online ranking: the score is sent automatically; this shows the result -->
+            <div id="rank-status" class="rank-result"></div>
             <button id="retry" class="big-btn" type="button">Retry</button>
             <button id="share" class="sub-btn" type="button">シェア</button>
             <button id="over-home" class="sub-btn" type="button">ホームへ</button>

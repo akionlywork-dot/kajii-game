@@ -16,7 +16,7 @@ function pngSize(file) {
 }
 
 test('manifest: name, relative start page, standalone, portrait', () => {
-  assert.equal(manifest.name, 'かじーゲーム');
+  assert.equal(manifest.name, 'かじーの合体大合戦');
   assert.equal(manifest.start_url, './');
   assert.equal(manifest.display, 'standalone');
   assert.equal(manifest.orientation, 'portrait');

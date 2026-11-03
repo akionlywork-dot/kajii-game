@@ -336,3 +336,27 @@ test('tutorialNext moves on only for the event the step waits for', () => {
   assert.equal(L.tutorialNext(2, 'merge', steps), 3); // = steps.length: finished
   assert.equal(L.tutorialNext(3, 'tap', steps), 3);   // stays finished
 });
+
+// ----- Ranking for everyone -----
+test('nameIsReady needs something left after cleaning', () => {
+  assert.equal(L.nameIsReady('かじー'), true);
+  assert.equal(L.nameIsReady('   '), false);
+  assert.equal(L.nameIsReady('<>'), false);
+  assert.equal(L.nameIsReady(''), false);
+  assert.equal(L.nameIsReady(null), false);
+});
+
+test('makePlayerId makes ids the ranking script accepts', () => {
+  const id = L.makePlayerId();
+  assert.ok(L.isPlayerId(id), id);
+  assert.equal(id.length, 18);
+  assert.notEqual(L.makePlayerId(), L.makePlayerId()); // random
+  assert.equal(L.makePlayerId(() => 0), 'p-aaaaaaaaaaaaaaaa');
+});
+
+test('isPlayerId refuses broken ids', () => {
+  assert.equal(L.isPlayerId('p-abc'), false);       // too short
+  assert.equal(L.isPlayerId('x-abcdefghij'), false);
+  assert.equal(L.isPlayerId('p-ABCDEFGHIJ'), false); // capitals
+  assert.equal(L.isPlayerId(null), false);
+});

@@ -121,8 +121,31 @@ const GameLogic = {
   // Clean a player name before sending: no control characters or < >,
   // at most 10 characters, and a default when empty.
   cleanName(text) {
-    const name = String(text || '').replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, 10);
-    return name || 'ななし';
+    return GameLogic.stripName(text) || 'ななし';
+  },
+
+  // The name without odd characters (may be empty)
+  stripName(text) {
+    return String(text || '').replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, 10);
+  },
+
+  // Can this be used as a ranking name? (something left after cleaning)
+  nameIsReady(text) {
+    return GameLogic.stripName(text).length > 0;
+  },
+
+  // A random id for this device's player, like "p-k3j9x0a1b2c3d4e5".
+  // Only letters a-z and digits, so the ranking script can check it.
+  makePlayerId(rand = Math.random) {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let id = 'p-';
+    for (let i = 0; i < 16; i++) id += chars[Math.floor(rand() * chars.length)];
+    return id;
+  },
+
+  // Is this a player id made by makePlayerId? (old or broken saved data -> make a new one)
+  isPlayerId(text) {
+    return /^p-[a-z0-9]{8,32}$/.test(String(text || ''));
   },
 
   // Place (1 = top) a score would get in a list sorted from high to low.

@@ -462,10 +462,14 @@ function endGame() {
   countUpScore(score);
   overHighEl.textContent = 'BEST ' + highScore;
   overBestEl.hidden = !GameLogic.isNewBest(score, bestAtStart);
-  prepareRankForm();
+  shareBtn.textContent = 'シェア';
   gameOverEl.hidden = false;
   resizeMascots(); // the sad Mokumoku can only be sized once the card is visible
   playSound('gameover');
+  // everyone takes part in the ranking: send this score (ask the name first if needed)
+  const finalScore = score;
+  if (playerName) sendScore(finalScore);
+  else askName(() => sendScore(finalScore));
 }
 
 function restart() {
@@ -635,6 +639,7 @@ function endTutorial(finished) {
   jarFront.classList.remove('spot-rim');
   if (finished) saveText('mergeGameTutorialDone', '1');
   restart(); // the real game starts on an empty jar with normal characters
+  if (!playerName) askName(); // everyone takes part in the ranking: ask the name now
 }
 
 // Keep the bubble just under Mokumoku (called every frame while the tutorial is on)
@@ -814,6 +819,7 @@ function renderRanking(top) {
   for (const row of top) {
     const li = document.createElement('li');
     li.textContent = row.name + '　' + row.score;
+    if (row.mine) li.className = 'mine'; // the player's own row stands out
     list.append(li);
   }
 }
@@ -825,31 +831,134 @@ async function showRanking() {
     message.textContent = 'ランキングは準備中です';
     return;
   }
+  const me = document.getElementById('ranking-me');
+  me.textContent = '';
   message.textContent = 'よみこみ中…';
   try {
-    const data = await fetchJson(CONFIG.rankingUrl);
+    const data = await fetchJson(CONFIG.rankingUrl + '?id=' + encodeURIComponent(playerId));
     renderRanking(data.top || []);
     message.textContent = (data.top || []).length ? '' : 'まだだれもいません';
+    if (data.rank > 0) me.textContent = 'あなたは ' + data.players + ' 人中 ' + data.rank + ' 位';
   } catch (e) {
     message.textContent = '通信できませんでした';
   }
 }
 
-// Game over: send this score with a name
-const rankForm = document.getElementById('rank-form');
-const rankName = document.getElementById('rank-name');
-const rankSend = document.getElementById('rank-send');
-const rankResult = document.getElementById('rank-result');
+// ----- Everyone takes part in the ranking -----
+// Each device has its own player id (kept in localStorage). The ranking keeps
+// one row per player with their best score, so sending every game is fine.
+let playerId = loadText('mergeGamePlayerId');
+if (!GameLogic.isPlayerId(playerId)) {
+  playerId = GameLogic.makePlayerId();
+  saveText('mergeGamePlayerId', playerId);
+}
+let playerName = GameLogic.stripName(loadText('mergeGameName'));
+const rankStatus = document.getElementById('rank-status');
+
+function saveName(text) {
+  playerName = GameLogic.stripName(text);
+  saveText('mergeGameName', playerName);
+  nameSetting.value = playerName;
+}
+
+// Send a score. If it cannot be sent now, it is kept and sent next time.
+async function sendScore(points) {
+  const pending = GameLogic.parseHighScore(loadText('mergeGameRankPending'));
+  const best = Math.max(points, pending); // the server keeps only the best anyway
+  if (best === 0 && points === 0) {
+    rankStatus.textContent = '';
+    return;
+  }
+  saveText('mergeGameRankPending', String(best));
+  if (!CONFIG.rankingUrl) {
+    rankStatus.textContent = 'ランキングは準備中です';
+    return;
+  }
+  rankStatus.textContent = 'ランキングに送信中…';
+  try {
+    // text/plain keeps the request simple, so Apps Script accepts it from any page
+    const data = await fetchJson(CONFIG.rankingUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ id: playerId, name: playerName, score: best }),
+    });
+    if (!data.ok) throw new Error(data.error);
+    saveText('mergeGameRankPending', '0'); // delivered
+    rankStatus.textContent = data.rank > 0 ? 'ランキング ' + data.rank + ' 位！' : 'ランキングに送りました';
+  } catch (e) {
+    rankStatus.textContent = '送信できませんでした（次に送ります）';
+  }
+}
+
+// A score that could not be sent earlier: try again quietly when the game opens
+function sendPendingScore() {
+  if (playerName && CONFIG.rankingUrl && GameLogic.parseHighScore(loadText('mergeGameRankPending')) > 0) {
+    sendScore(0);
+  }
+}
+
+// The "what is your name?" card. It cannot be closed without a name.
+const nameAskEl = document.getElementById('name-ask');
+const nameInput = document.getElementById('name-input');
+const nameOk = document.getElementById('name-ok');
+let nameDone = null; // what to do after the name is given
+
+function askName(then) {
+  nameDone = then || null;
+  nameInput.value = playerName;
+  nameOk.disabled = !GameLogic.nameIsReady(nameInput.value);
+  nameAskEl.hidden = false;
+  paused = true; // nothing moves while the player types
+  // Mokumoku asks (talking face)
+  const dpr = window.devicePixelRatio || 1;
+  const box = nameMascot.getBoundingClientRect();
+  nameMascot.width = Math.round(box.width * dpr);
+  nameMascot.height = Math.round(box.height * dpr);
+  const c = nameMascot.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawMokumoku(c, box.width * 0.5, box.height * 0.55, box.height * 0.32, 'talk');
+}
+const nameMascot = document.getElementById('name-mascot');
+
+nameInput.addEventListener('input', () => {
+  nameOk.disabled = !GameLogic.nameIsReady(nameInput.value);
+});
+nameOk.addEventListener('click', () => {
+  if (!GameLogic.nameIsReady(nameInput.value)) return;
+  saveName(nameInput.value);
+  nameAskEl.hidden = true;
+  paused = !pauseEl.hidden; // back to how it was (still paused only if the pause card is open)
+  if (nameDone) nameDone();
+});
+
+// Settings: change the name (an empty name is not allowed: it goes back)
+const nameSetting = document.getElementById('name-setting');
+nameSetting.value = playerName;
+nameSetting.addEventListener('change', () => {
+  if (!GameLogic.nameIsReady(nameSetting.value)) {
+    nameSetting.value = playerName;
+    return;
+  }
+  saveName(nameSetting.value);
+  // tell the ranking about the new name (score 0 never lowers the best)
+  if (CONFIG.rankingUrl) {
+    fetchJson(CONFIG.rankingUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ id: playerId, name: playerName, score: 0 }),
+    }).catch(() => {});
+  }
+});
 
 // ----- Share the score -----
 // Phones show their share menu (LINE, X, ...). Elsewhere the text is copied.
 const shareBtn = document.getElementById('share');
 shareBtn.addEventListener('click', async () => {
-  const text = 'かじーゲームで ' + score + ' 点とったよ！';
+  const text = 'かじーの合体大合戦で ' + score + ' 点とったよ！';
   const url = location.origin + location.pathname;
   try {
     if (navigator.share) {
-      await navigator.share({ title: 'かじーゲーム', text, url });
+      await navigator.share({ title: 'かじーの合体大合戦', text, url });
     } else {
       await navigator.clipboard.writeText(text + ' ' + url);
       shareBtn.textContent = 'コピーしました';
@@ -859,36 +968,7 @@ shareBtn.addEventListener('click', async () => {
   }
 });
 
-function prepareRankForm() {
-  shareBtn.textContent = 'シェア';
-  rankForm.hidden = !CONFIG.rankingUrl || score === 0;
-  rankName.value = loadText('mergeGameName') || '';
-  rankSend.disabled = false;
-  rankResult.textContent = '';
-}
 
-rankSend.addEventListener('click', async () => {
-  const name = GameLogic.cleanName(rankName.value);
-  const myScore = score;
-  saveText('mergeGameName', name);
-  rankSend.disabled = true;
-  rankResult.textContent = '送信中…';
-  try {
-    // text/plain keeps the request simple, so Apps Script accepts it from any page
-    const data = await fetchJson(CONFIG.rankingUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ name, score: myScore }),
-    });
-    if (!data.ok) throw new Error(data.error);
-    const top = data.top || [];
-    const place = top.findIndex((r) => r.name === name && r.score === myScore) + 1;
-    rankResult.textContent = place > 0 ? 'ランキング ' + place + ' 位！' : '送信しました（ランク外）';
-  } catch (e) {
-    rankResult.textContent = '送信できませんでした';
-    rankSend.disabled = false; // let the player try again
-  }
-});
 
 // Settings: volumes and background motion, saved on this device
 const volBgmInput = document.getElementById('vol-bgm');
@@ -1546,6 +1626,7 @@ function showSplash() {
 
 function closeSplash() {
   if (splashEl.classList.contains('done')) return; // only once
+  sendPendingScore();
   clearTimeout(splashTimer);
   splashEl.classList.add('done'); // fades out (see style.css)
   setTimeout(() => { splashEl.hidden = true; }, 450);

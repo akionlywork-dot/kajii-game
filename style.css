@@ -292,7 +292,12 @@ body {
 }
 
 .logo {
-  font-size: min(3.2em, 13.5vw); /* never wider than the screen (6 letters) */
+  /* two lines: a small "かじーの" over a big "合体大合戦" */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+  font-size: min(3.2em, 15vw); /* the big line (5 letters) is never wider than the screen */
   font-weight: 800;
   color: var(--lavender-dark);
   /* white outline + soft shadow, like a sticker */
@@ -300,6 +305,11 @@ body {
     0.06em 0 #fff, -0.06em 0 #fff, 0 0.06em #fff, 0 -0.06em #fff,
     0 0.12em 0.25em rgba(90, 80, 140, 0.35);
   animation: float 2.4s ease-in-out infinite;
+}
+
+.logo-small {
+  font-size: 0.5em;
+  letter-spacing: 0.1em;
 }
 
 /* bobs up and down gently (CSS only, cheap on phones) */
@@ -454,16 +464,8 @@ body {
   opacity: 0.18;
 }
 
-/* ranking form on the game-over card */
-.rank-form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4em;
-  margin-bottom: 0.6em;
-}
-
-.rank-form input {
+/* name boxes (the name card and the settings) */
+.name-input {
   font-family: var(--font);
   font-size: 1em;
   font-weight: 800;
@@ -485,6 +487,54 @@ body {
   font-weight: 800;
   color: var(--lavender-dark);
   text-align: center;
+}
+
+/* the name card sits over everything, like the menu panel */
+#name-ask {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(90, 83, 120, 0.45);
+  font-size: clamp(14px, 4vmin, 22px);
+  z-index: 40;
+}
+
+#name-ask[hidden] {
+  display: none;
+}
+
+.name-help {
+  margin: 0;
+  text-align: center;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+#name-ok:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* "あなたは 3 位" above the ranking list, and the player's own row */
+.ranking-me {
+  margin: 0 0 0.5em;
+  text-align: center;
+  font-weight: 800;
+  color: var(--lavender-dark);
+}
+
+/* the place number of the player's row stays dark (it is outside the colored box) */
+#ranking-list li.mine::marker {
+  color: var(--lavender-dark);
+}
+
+#ranking-list li.mine {
+  color: #fff;
+  background: var(--lavender);
+  border-radius: 0.6em;
+  padding: 0 0.4em;
 }
 
 /* one setting per line: name, then the slider */
