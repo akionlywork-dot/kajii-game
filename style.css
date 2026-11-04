@@ -849,8 +849,11 @@ body.at-home #game-wrap {
   gap: 1.5em;
 }
 
-.layout-top #next-box {
-  box-sizing: border-box;
+.layout-top #previews {
+  width: auto; /* the two boxes get their size from main.js */
+}
+
+.layout-top .preview-box {
   justify-content: center;
 }
 
@@ -886,12 +889,21 @@ body.at-home #game-wrap {
   gap: 0.8em;
 }
 
-#next-box {
+/* the NOW box and the NEXT box, side by side */
+#previews {
+  display: flex;
+  gap: 0.6em;
+  width: 100%;
+}
+
+/* one box: a label and a square picture */
+.preview-box {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.2em;
-  width: 100%;
   box-sizing: border-box;
   padding: 0.5em 0.4em 0.6em;
   background: var(--cream);
@@ -900,9 +912,11 @@ body.at-home #game-wrap {
   box-shadow: var(--shadow);
 }
 
+#now,
 #next {
-  width: 4.6em;
-  height: 4.6em;
+  width: 100%;
+  max-width: 4.6em;
+  aspect-ratio: 1; /* always square */
 }
 
 /* the evolution circle: a round cream card, icons drawn by main.js */
@@ -959,6 +973,15 @@ body.at-home #game-wrap {
   border: 0.12em solid var(--lavender);
   border-radius: 2em;
   cursor: pointer;
+  min-width: 7.5em; /* シェア and ホームへ get the same width */
+}
+
+/* 遊び方: the long "もくもくに教えてもらう" button fits on one line */
+#howto-tutorial {
+  display: block;
+  margin: 0 auto; /* centered */
+  font-size: 1.15em;
+  padding: 0.5em 1.2em;
 }
 
 /* buttons on a card, one under the other */

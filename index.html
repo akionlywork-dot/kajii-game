@@ -85,6 +85,7 @@
 
       <div id="panel-howto" class="panel-body" hidden>
         <p>タップ（クリック）した場所に、もくもくがキャラを落とします。</p>
+        <p>NOW は今もっているキャラ、NEXT はそのつぎに落とすキャラです。</p>
         <p>同じキャラどうしがくっつくと、ひとつ大きいキャラに進化します。</p>
         <p>いちばん大きいキャラどうしがくっつくと、2人とも消えてボーナス！</p>
         <p>キャラがびんの口からあふれて 2 秒たつと、ゲームオーバー。</p>
@@ -192,9 +193,16 @@
       </div>
 
       <div id="side">
-        <div id="next-box">
-          <div class="label">NEXT</div>
-          <canvas id="next"></canvas>
+        <!-- Two separate boxes: NOW = the item you are holding, NEXT = the one after it -->
+        <div id="previews">
+          <div id="now-box" class="preview-box">
+            <div class="label">NOW</div>
+            <canvas id="now"></canvas>
+          </div>
+          <div id="next-box" class="preview-box">
+            <div class="label">NEXT</div>
+            <canvas id="next"></canvas>
+          </div>
         </div>
         <!-- Evolution circle: all 11 characters in order, drawn by main.js -->
         <canvas id="ring"></canvas>

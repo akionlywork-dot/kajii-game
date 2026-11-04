@@ -14,6 +14,7 @@ const wrap = document.getElementById('game-wrap');
 const ui = document.getElementById('ui');
 const stage = document.getElementById('stage');
 const side = document.getElementById('side');
+const nowBox = document.getElementById('now-box');
 const nextBox = document.getElementById('next-box');
 const jarBack = document.getElementById('jar-back');
 const jarFront = document.getElementById('jar-front');
@@ -22,6 +23,8 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const nextCanvas = document.getElementById('next');
 const nextCtx = nextCanvas.getContext('2d');
+const nowCanvas = document.getElementById('now'); // the item you are holding
+const nowCtx = nowCanvas.getContext('2d');
 const scoreEl = document.getElementById('score');
 const bestEl = document.getElementById('best');
 const muteBtn = document.getElementById('mute');
@@ -91,9 +94,11 @@ function resize() {
   side.style.height = useTop ? ROW_H * scale + 'px' : '';
   side.style.marginLeft = useTop ? '0' : GAP * scale + 'px';
   side.style.marginTop = useTop ? '0' : SKY_H * scale + 'px';
-  // "top": the NEXT box is a square as big as the circle
-  nextBox.style.width = useTop ? ROW_H * scale + 'px' : '';
-  nextBox.style.height = useTop ? ROW_H * scale + 'px' : '';
+  // "top": the NOW box and the NEXT box are as tall as the circle, a bit narrower
+  for (const box of [nowBox, nextBox]) {
+    box.style.width = useTop ? ROW_H * 0.8 * scale + 'px' : '';
+    box.style.height = useTop ? ROW_H * scale + 'px' : '';
+  }
 
   // the glass jar starts at the danger line: its mouth is the "too full" line
   for (const el of [jarBack, jarFront]) el.style.top = CONFIG.dangerLineY * scale + 'px';
@@ -105,10 +110,6 @@ function resize() {
   // After this, we can draw using game units and it is scaled automatically
   ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
 
-  // NEXT preview canvas: its CSS size comes from style.css
-  const nextPx = nextCanvas.getBoundingClientRect().width;
-  nextCanvas.width = Math.round(nextPx * dpr);
-  nextCanvas.height = Math.round(nextPx * dpr);
 
   // evolution circle: as wide as the right column, or as tall as the row
   const ringPx = (useTop ? ROW_H : sideW) * scale;
@@ -119,6 +120,20 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 resize();
+
+// NOW and NEXT preview canvases: their size on screen comes from style.css.
+// A ResizeObserver tells us whenever that size changes (also when the game
+// screen first appears), and we match the canvas pixels to it so it stays sharp.
+const previewObserver = new ResizeObserver(() => {
+  const dpr = window.devicePixelRatio || 1;
+  for (const c of [nowCanvas, nextCanvas]) {
+    const px = c.getBoundingClientRect().width;
+    c.width = Math.round(px * dpr);
+    c.height = Math.round(px * dpr);
+  }
+});
+previewObserver.observe(nowCanvas);
+previewObserver.observe(nextCanvas);
 
 // ----- Saving (localStorage) -----
 // Storage can be blocked (private mode, settings), so every use is wrapped in try/catch.
@@ -423,6 +438,11 @@ function mergeTouching() {
     popups.push({ x: point.x, y: point.y - 12, text: '+' + result.score, age: 0, life: 900 });
     if (result.newType !== null && markSeen(result.newType)) {
       popups.push({ x: point.x, y: point.y - 38, text: 'NEW!', age: 0, life: 1400, isNew: true });
+    }
+    // the biggest character was made (the goal!): a big message and lots of sparkles
+    if (result.newType === CONFIG.fruits.length - 1) {
+      popups.push({ x: W / 2, y: H * 0.4, text: 'さいだい合体！', age: 0, life: 2400, isNew: true, big: true });
+      sparkles = sparkles.concat(GameLogic.makeSparkles(point.x, point.y, 30));
     }
     mascotSurprisedUntil = performance.now() + 600; // Mokumoku opens its eyes
     tutorialEvent('merge');
@@ -1149,8 +1169,8 @@ function drawPopups() {
   ctx.lineJoin = 'round';
   for (const p of popups) {
     ctx.globalAlpha = Math.min(1, 2 * (1 - p.age / p.life)); // fades in the second half
-    ctx.font = '800 ' + (p.isNew ? 24 : 20) + 'px ' + FONT;
-    ctx.lineWidth = 5;
+    ctx.font = '800 ' + (p.big ? 40 : p.isNew ? 24 : 20) + 'px ' + FONT;
+    ctx.lineWidth = p.big ? 8 : 5;
     ctx.strokeStyle = '#ffffff';
     ctx.strokeText(p.text, p.x, p.y);
     ctx.fillStyle = p.isNew ? '#f06b97' : '#8e7cc9';
@@ -1181,14 +1201,20 @@ function drawSparkles() {
   ctx.globalAlpha = 1;
 }
 
-function drawNext() {
-  const size = nextCanvas.width;
-  nextCtx.setTransform(1, 0, 0, 1, 0, 0);
-  nextCtx.clearRect(0, 0, size, size);
+// Draw one item so it fills a small square canvas (used for NOW and NEXT)
+function drawPreview(c, pctx, type) {
+  const size = c.width;
+  pctx.setTransform(1, 0, 0, 1, 0, 0);
+  pctx.clearRect(0, 0, size, size);
   // shrink or grow the item so it fills the box
-  const k = (size * 0.9) / longSide(nextType);
-  nextCtx.setTransform(k, 0, 0, k, size / 2, size / 2);
-  drawItem(nextCtx, nextType, 0, 0, 0, waitingOffset(nextType));
+  const k = (size * 0.9) / longSide(type);
+  pctx.setTransform(k, 0, 0, k, size / 2, size / 2);
+  drawItem(pctx, type, 0, 0, 0, waitingOffset(type));
+}
+
+function drawNext() {
+  drawPreview(nowCanvas, nowCtx, currentType); // the item you are holding
+  drawPreview(nextCanvas, nextCtx, nextType);  // the one after it
 }
 
 function draw() {
